@@ -19,22 +19,54 @@ on:
         description: Docker image tags (newline separated)
         type: string
         required: true
+      skip-arm-build:
+        description: Skip building/pushing the linux/arm64 image
+        type: boolean
+        default: false
 
 jobs:
+  prepare:
+    name: Prepare build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - id: set-matrix
+        run: |
+          MATRIX=$(jq -n '
+            [
+              {
+                "runner": "ubuntu-24.04",
+                "platform": "linux/amd64",
+                "platform-slug": "linux-amd64"
+              }
+            ]
+          ')
+
+          if [ "$SKIP_ARM_BUILD" != "true" ]; then
+            MATRIX=$(echo "$MATRIX" | jq '. + [
+              {
+                "runner": "ubuntu-24.04-arm",
+                "platform": "linux/arm64",
+                "platform-slug": "linux-arm64"
+              }
+            ]')
+          fi
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+        env:
+          SKIP_ARM_BUILD: ${{ inputs.skip-arm-build }}
+
   build:
     name: Build image
     runs-on: ${{ matrix.runner }}
+    needs: prepare
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: ubuntu-24.04
-            platform: linux/amd64
-            platform-slug: linux-amd64
-          - runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            platform-slug: linux-arm64
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout code
