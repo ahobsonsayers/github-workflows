@@ -19,6 +19,10 @@ on:
         description: Docker image tags (newline separated)
         type: string
         required: true
+      build-args:
+        description: Docker build arguments (newline separated KEY=VALUE)
+        type: string
+        default: ''
       skip-arm-build:
         description: Skip building/pushing the linux/arm64 image
         type: boolean
@@ -92,6 +96,7 @@ jobs:
           file: ${{ inputs.dockerfile }}
           platforms: ${{ matrix.platform }}
           tags: ${{ inputs.image-name }}
+          build-args: ${{ inputs.build-args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
