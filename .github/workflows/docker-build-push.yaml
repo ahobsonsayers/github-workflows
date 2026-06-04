@@ -34,7 +34,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          MATRIX=$(jq -n '
+          MATRIX=$(jq -cn '
             [
               {
                 "runner": "ubuntu-24.04",
@@ -45,7 +45,7 @@ jobs:
           ')
 
           if [ "$SKIP_ARM_BUILD" != "true" ]; then
-            MATRIX=$(echo "$MATRIX" | jq '. + [
+            MATRIX=$(echo "$MATRIX" | jq -c '. + [
               {
                 "runner": "ubuntu-24.04-arm",
                 "platform": "linux/arm64",
