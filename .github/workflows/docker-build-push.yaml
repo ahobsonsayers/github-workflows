@@ -23,6 +23,10 @@ on:
         description: Docker build arguments (newline separated KEY=VALUE)
         type: string
         default: ''
+      build-cache:
+        description: Enable docker build cache
+        type: boolean
+        default: true
       skip-arm-build:
         description: Skip building/pushing the linux/arm64 image
         type: boolean
@@ -97,8 +101,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: ${{ inputs.image-name }}
           build-args: ${{ inputs.build-args }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: ${{ inputs.build-cache == true && 'type=gha' || '' }}
+          cache-to: ${{ inputs.build-cache == true && 'type=gha,mode=max' || '' }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Output digest
