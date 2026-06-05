@@ -93,7 +93,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.working-directory }}
-          file: ${{ inputs.dockerfile }}
+          file: ${{ inputs.working-directory }}/${{ inputs.dockerfile }}
           platforms: ${{ matrix.platform }}
           tags: ${{ inputs.image-name }}
           build-args: ${{ inputs.build-args }}
