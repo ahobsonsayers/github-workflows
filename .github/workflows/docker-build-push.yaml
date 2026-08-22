@@ -1,8 +1,15 @@
 name: Build & Push Docker Image
 
+# Requires DOCKERHUB_USERNAME + DOCKERHUB_PASSWORD (ghcr.io: PAT with write:packages)
+# and callers must use `secrets: inherit`.
+
 on:
   workflow_call:
     inputs:
+      registry:
+        description: Container registry to push to (e.g. docker.io, ghcr.io)
+        type: string
+        default: docker.io
       working-directory:
         description: Build working directory
         type: string
@@ -85,10 +92,11 @@ jobs:
         id: setup-buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Dockerhub
-        id: login-dockerhub
+      - name: Login to registry
+        id: login-registry
         uses: docker/login-action@v3
         with:
+          registry: ${{ inputs.registry }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
@@ -131,10 +139,11 @@ jobs:
         with:
           matrix-step-name: build
 
-      - name: Login to Dockerhub
-        id: login-dockerhub
+      - name: Login to registry
+        id: login-registry
         uses: docker/login-action@v3
         with:
+          registry: ${{ inputs.registry }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
