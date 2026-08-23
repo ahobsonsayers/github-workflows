@@ -1,7 +1,7 @@
 # Build & Push a Docker Image.
-# The calling workflow MUST :
+# The calling workflow MUST:
 # - pass `secrets: inherit`
-# - have `DOCKER_REGISTRY_USERNAME` and `DOCKER_REGISTRY_PASSWORD` secrets set.
+# - have `DOCKER_REGISTRY_USERNAME` and `DOCKER_REGISTRY_PASSWORD` secrets set UNLESS using ghcr.io registry (these can be auto inferred for ghcr.io)
 
 name: Build & Push Docker Image
 
@@ -20,9 +20,6 @@ on:
         description: Docker image registry (defaults to Docker Hub)
         type: string
         default: docker.io
-        # Use 'ghcr.io' for GitHub Container Registry - credentials are auto-derived
-        # from GITHUB_TOKEN. Otherwise DOCKER_REGISTRY_USERNAME and
-        # DOCKER_REGISTRY_PASSWORD secrets are required (pass 'secrets: inherit').
       image-name:
         description: Docker image name
         type: string
@@ -89,8 +86,8 @@ jobs:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     env:
-      DOCKER_REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
-      DOCKER_REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
+      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -105,9 +102,6 @@ jobs:
             echo "::error::DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD secrets must be set (pass 'secrets: inherit')"
             exit 1
           fi
-        env:
-          REGISTRY_USERNAME: ${{ env.DOCKER_REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ env.DOCKER_REGISTRY_PASSWORD }}
 
       - name: Set up Buildx
         id: setup-buildx
@@ -118,8 +112,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ inputs.image-registry }}
-          username: ${{ env.DOCKER_REGISTRY_USERNAME }}
-          password: ${{ env.DOCKER_REGISTRY_PASSWORD }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Build and push digest
         id: build-and-push
@@ -150,8 +144,8 @@ jobs:
     timeout-minutes: 10
 
     env:
-      DOCKER_REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
-      DOCKER_REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
+      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
 
     steps:
       - name: Set up Buildx
@@ -172,17 +166,14 @@ jobs:
             echo "::error::DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD secrets must be set (pass 'secrets: inherit')"
             exit 1
           fi
-        env:
-          REGISTRY_USERNAME: ${{ env.DOCKER_REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ env.DOCKER_REGISTRY_PASSWORD }}
 
       - name: Login to registry
         id: login-registry
         uses: docker/login-action@v3
         with:
           registry: ${{ inputs.image-registry }}
-          username: ${{ env.DOCKER_REGISTRY_USERNAME }}
-          password: ${{ env.DOCKER_REGISTRY_PASSWORD }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Push tags
         id: push-tags
