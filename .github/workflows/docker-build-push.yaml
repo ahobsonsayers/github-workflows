@@ -1,7 +1,7 @@
 # Build & Push a Docker Image.
 # The calling workflow MUST:
 # - pass `secrets: inherit`
-# - have `DOCKER_REGISTRY_USERNAME` and `DOCKER_REGISTRY_PASSWORD` secrets set UNLESS using ghcr.io registry (these can be auto inferred for ghcr.io)
+# - have `DOCKER_REGISTRY_USERNAME` variable and `DOCKER_REGISTRY_PASSWORD` secret set UNLESS using ghcr.io registry (these can be auto inferred for ghcr.io)
 
 name: Build & Push Docker Image
 
@@ -88,7 +88,7 @@ jobs:
       image-slug: ${{ steps.get-image-slug.outputs.slug }}
 
     env:
-      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
+      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || vars.DOCKER_REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
 
     steps:
@@ -109,7 +109,7 @@ jobs:
         if: inputs.image-registry != 'ghcr.io'
         run: |
           if [ -z "$REGISTRY_USERNAME" ] || [ -z "$REGISTRY_PASSWORD" ]; then
-            echo "::error::DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD secrets must be set (pass 'secrets: inherit')"
+            echo "::error::DOCKER_REGISTRY_USERNAME variable and DOCKER_REGISTRY_PASSWORD secret must be set (pass 'secrets: inherit')"
             exit 1
           fi
 
@@ -154,7 +154,7 @@ jobs:
     timeout-minutes: 10
 
     env:
-      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
+      REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || vars.DOCKER_REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ inputs.image-registry == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKER_REGISTRY_PASSWORD }}
 
     steps:
@@ -173,7 +173,7 @@ jobs:
         if: inputs.image-registry != 'ghcr.io'
         run: |
           if [ -z "$REGISTRY_USERNAME" ] || [ -z "$REGISTRY_PASSWORD" ]; then
-            echo "::error::DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD secrets must be set (pass 'secrets: inherit')"
+            echo "::error::DOCKER_REGISTRY_USERNAME variable and DOCKER_REGISTRY_PASSWORD secret must be set (pass 'secrets: inherit')"
             exit 1
           fi
 
