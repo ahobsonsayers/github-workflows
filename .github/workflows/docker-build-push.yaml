@@ -84,6 +84,8 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    outputs:
+      image-slug: ${{ steps.get-image-slug.outputs.slug }}
 
     env:
       REGISTRY_USERNAME: ${{ inputs.image-registry == 'ghcr.io' && github.actor || secrets.DOCKER_REGISTRY_USERNAME }}
@@ -93,6 +95,14 @@ jobs:
       - name: Checkout code
         id: checkout-code
         uses: actions/checkout@v6
+
+      - name: Get image slug
+        id: get-image-slug
+        run: |
+          SLUG="build-$(echo "$IMAGE_NAME" | tr '/:.' '---')"
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+        env:
+          IMAGE_NAME: ${{ inputs.image-name }}
 
       - name: Check registry secrets are set
         id: check-secrets
@@ -132,7 +142,7 @@ jobs:
         id: output-digest
         uses: GoCodeAlone/github-action-matrix-outputs-write@1.0.3
         with:
-          matrix-step-name: build
+          matrix-step-name: ${{ steps.get-image-slug.outputs.slug }}
           matrix-key: ${{ matrix.platform-slug }}
           outputs: |
             digest: ${{ steps.build-and-push.outputs.digest }}
@@ -156,7 +166,7 @@ jobs:
         id: get-digests
         uses: GoCodeAlone/github-action-matrix-outputs-read@1.0.6
         with:
-          matrix-step-name: build
+          matrix-step-name: ${{ needs.build.outputs.image-slug }}
 
       - name: Check registry secrets are set
         id: check-secrets
